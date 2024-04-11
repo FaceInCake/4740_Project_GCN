@@ -1,6 +1,7 @@
 
 __pycache__
 
+# Image folders
 Data/train2017/*.jpg
 Data/train2017/*.png
 Data/test2017/*.jpg
@@ -12,3 +13,8 @@ Data/stuff_train2017_pixelmaps/*.jpg
 Data/stuff_train2017_pixelmaps/*.png
 Data/stuff_val2017_pixelmaps/*.jpg
 Data/stuff_val2017_pixelmaps/*.png
+
+
+# Too big!
+Data/ParsedAnnotations/Objects_train.csv
+Data/ParsedAnnotations/Segmentations_train.json
