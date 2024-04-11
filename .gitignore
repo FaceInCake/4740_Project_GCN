@@ -1,0 +1,14 @@
+
+__pycache__
+
+Data/train2017/*.jpg
+Data/train2017/*.png
+Data/test2017/*.jpg
+Data/test2017/*.png
+Data/val2017/*.jpg
+Data/val2017/*.png
+Data/annotations/
+Data/stuff_train2017_pixelmaps/*.jpg
+Data/stuff_train2017_pixelmaps/*.png
+Data/stuff_val2017_pixelmaps/*.jpg
+Data/stuff_val2017_pixelmaps/*.png
