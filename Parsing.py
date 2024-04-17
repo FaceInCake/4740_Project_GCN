@@ -66,8 +66,8 @@ def get_categories () -> dict[int,Category]:
     return retr
 
 @lru_cache(1)
-def get_image_list () -> dict[int,ImageInfo]:
-    FILE_PATH = "Data/ParsedAnnotations/ImageList.csv"
+def get_image_list (type:Literal["train","val"]) -> dict[int,ImageInfo]:
+    FILE_PATH = f"Data/ParsedAnnotations/ImageList_{type}.csv"
     retr = {}
     with open(FILE_PATH) as fin:
         fin.readline()
@@ -104,7 +104,7 @@ def get_segmentations (type:Literal["train","val"]) -> dict[int,Polygons|RLE]:
 @lru_cache(2)
 def get_objects (type:Literal["train","val"]) -> dict[int,ObjectSegmentation]:
     cats = get_categories()
-    images = get_image_list()
+    images = get_image_list(type)
     segs = get_segmentations(type)
     FILE_PATH = f"Data/ParsedAnnotations/Objects_{type}.csv"
     retr = {}
