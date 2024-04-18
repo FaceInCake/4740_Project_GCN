@@ -13,10 +13,17 @@ import json
 # Path to the data
 data_dir = './Data/'
 annotation_file_training = data_dir + 'stuff_train2017.json'
+annotation_file_val = data_dir + 'stuff_val2017.json'
+
 image_dir_training = data_dir + 'train2017/'
-pixel_maps_dir_training = data_dir + 'stuff_val2017_pixelmaps/'
+image_dir_val = data_dir + 'val2017/'
+
 segmentation_dir = data_dir + 'segmentations/'
+val_segmentation_dir = data_dir + 'val_segmentations/'
+
 os.makedirs(segmentation_dir, exist_ok=True)
+#pixel_maps_dir_training = data_dir + 'stuff_train2017_pixelmaps/'
+
 
 # Custom JSONEncoder that converts NumPy types to Python types
 class NumpyEncoder(json.JSONEncoder):
@@ -57,7 +64,7 @@ def assign_labels_to_superpixels(annotations, segments, categories):
     return superpixel_labels
 
 # Initialize COCO api for instance annotations
-coco = COCO(annotation_file_training)
+coco = COCO(annotation_file_val)
 
 # Load the categories
 categories = coco.loadCats(coco.getCatIds())
@@ -126,7 +133,7 @@ for img_id in image_ids:
     image_info = coco.loadImgs(img_id)[0]
     annotations = coco.loadAnns(coco.getAnnIds(imgIds=img_id))
     
-    image = cv2.imread(image_dir_training + image_info['file_name'])
+    image = cv2.imread(image_dir_val + image_info['file_name'])
     if image is None:
         continue  # If the image can't be loaded, skip to the next one
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -158,7 +165,7 @@ for img_id in image_ids:
     # Save the graph to a JSON file
     graph_data = nx.node_link_data(nx_graph)  # Convert to dict for json serialization
 
-    with open(os.path.join(segmentation_dir, f'image_{img_id}_graph.json'), 'w') as f:
+    with open(os.path.join(val_segmentation_dir, f'image_{img_id}_graph.json'), 'w') as f:
         # Use a custom JSON encoder for numpy data types
         json.dump(graph_data, f, cls=NumpyEncoder)
 
