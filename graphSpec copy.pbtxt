@@ -1,0 +1,30 @@
+node_sets {
+    key: "cluster"
+    value {
+        description: "A cluster of pixels, a superpixel if you will"
+        features {
+            key: "mean_clr"
+            value: { dtype: DT_FLOAT  shape: { dim { size: 3} }}
+        }
+        features {
+            key: "centroid"
+            value: { dtype: DT_FLOAT  shape: { dim { size: 3} }}
+        }
+        features {
+            key: "pixel_count"
+            value: { dtype: DT_INT32  shape: { dim { size: 1} }}
+        }
+        features {
+            key: "hidden_state"
+            value: { dtype: DT_FLOAT  shape: { dim { size: 7} }}
+        }
+    }
+}
+edge_sets {
+    key: "neighbors"
+    value {
+        description: "Cluster a is touching cluster b"
+        source: "cluster"
+        target: "cluster"
+    }
+}

@@ -1,5 +1,6 @@
 
 __pycache__
+.vscode/**
 
 # Image folders
 Data/train2017/*.jpg
