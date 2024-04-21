@@ -13,6 +13,9 @@ from torch_geometric.nn import GCNConv
 from pycocotools.coco import COCO
 import json
 import torch_geometric
+import time
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 # Path to the data
@@ -97,6 +100,69 @@ def validate(model, val_loader):
     return accuracy
 
 
+def print_epoch_stats(epoch, loss, accuracy, epoch_time, train_size, val_size):
+    print(f'Epoch {epoch:2d}: '
+          f'Train Loss: {loss:.4f}, '
+          f'Validation Accuracy: {accuracy:.2f}%, '
+          f'Epoch Time: {epoch_time:.2f}s, '
+          f'Train Size: {train_size}, '
+          f'Validation Size: {val_size}')
+    
+    
+# Define a function to plot your results with detailed configuration information
+def plot_results(hyperparameters, train_losses, val_accuracies):
+    for i, (params, train_loss, val_accuracy) in enumerate(zip(hyperparameters, train_losses, val_accuracies)):
+        fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+
+        # Plot training loss
+        axs[0].plot(range(1, len(train_loss) + 1), train_loss, label='Train Loss', color='blue')
+        axs[0].set_title(f'Configuration {i+1} - Training Loss')
+        axs[0].set_xlabel('Epoch')
+        axs[0].set_ylabel('Loss')
+        axs[0].legend()
+        axs[0].grid(True)
+
+        # Plot validation accuracy
+        axs[1].plot(range(1, len(val_accuracy) + 1), val_accuracy, label='Validation Accuracy', color='orange')
+        axs[1].set_title(f'Configuration {i+1} - Validation Accuracy')
+        axs[1].set_xlabel('Epoch')
+        axs[1].set_ylabel('Accuracy (%)')
+        axs[1].legend()
+        axs[1].grid(True)
+
+        # Mark the highest validation accuracy and its corresponding training loss
+        max_val_acc_index = val_accuracy.index(max(val_accuracy))
+        max_val_acc = max(val_accuracy)
+        corresponding_train_loss = train_loss[max_val_acc_index]
+        axs[1].plot(max_val_acc_index + 1, max_val_acc, 'ro')  # red dot
+        axs[0].plot(max_val_acc_index + 1, corresponding_train_loss, 'go')  # green dot
+        axs[1].annotate(f'({max_val_acc_index + 1}, {max_val_acc:.2f}%)', 
+                        xy=(max_val_acc_index + 1, max_val_acc), xytext=(3, 3), 
+                        textcoords="offset points", ha='left', va='bottom', color='red')
+        axs[0].annotate(f'({max_val_acc_index + 1}, {corresponding_train_loss:.4f})', 
+                        xy=(max_val_acc_index + 1, corresponding_train_loss), xytext=(3, -15), 
+                        textcoords="offset points", ha='left', va='top', color='green')
+
+        # Configuration details as text below the graphs
+        config_details = '\n'.join(f'{key}: {value}' for key, value in params.items())
+        plt.figtext(0.5, 0.01, f"Configuration {i+1} Details:\n{config_details}", 
+                    ha="center", fontsize=9, bbox={"facecolor":"orange", "alpha":0.5, "pad":5})
+
+        plt.tight_layout(rect=[0, 0.1, 1, 0.95])  # Adjust the layout to make space for the configuration details
+        plt.show()
+        
+def collect_epoch_stats(epoch, loss, accuracy, epoch_time, train_size, val_size, config_id):
+    epoch_stats = {
+        'Epoch': epoch,
+        'Train Loss': loss,
+        'Validation Accuracy': accuracy,
+        'Epoch Time': epoch_time,
+        'Train Size': train_size,
+        'Validation Size': val_size,
+        'Configuration ID': config_id
+    }
+    epoch_statistics.append(epoch_stats)
+
 
 coco = COCO(annotation_file_val)
 # Load the categories
@@ -110,25 +176,139 @@ print('Done processing training images')
 val_dataset = load_graphs_from_json(val_segmentation_dir)
 print('Done processing val images')
 
-train_loader = torch_geometric.loader.DataLoader(train_dataset, batch_size=10, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=10, shuffle=False)
-print('Done Training and Validation Data Loaders')
+# # Create DataLoaders
+# train_loader = torch_geometric.loader.DataLoader(train_dataset, batch_size=10, shuffle=True)
+# val_loader = DataLoader(val_dataset, batch_size=10, shuffle=False)
+# print('Done Training and Validation Data Loaders')
 
+# # GCN Model and Optimizer Initialization
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# model = GCN(num_features=3, num_classes=len(categories)).to(device)
+# optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+# print('Model and Optimizer Initialized')
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = GCN(num_features=3, num_classes=len(categories)).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-print('Model and Optimizer Initialized')
-
-# Run Training and Validation
-# for epoch in range(3):
+# # Run Training and Validation
+# for epoch in range(20):
+#     start_time = time.time()
 #     train_loss = train(model, train_loader, optimizer)
-#     print(f'Epoch: {epoch+1}, Loss: {train_loss}')
+#     end_time = time.time()
 #     val_acc = validate(model, val_loader)
-#     print(f'Epoch: {epoch}, Loss: {train_loss}, Validation Accuracy: {val_acc}')
+#     epoch_time = end_time - start_time
+#     train_size = len(train_dataset)
+#     val_size = len(val_dataset)
+    
+#     # Calling the function to print epoch statistics
+#     print_epoch_stats(epoch+1, train_loss, val_acc, epoch_time, train_size, val_size)
+# Run Training and Validation
+# for epoch in range(20):
+#     start_time = time.time()
+#     train_loss = train(model, train_loader, optimizer)
+#     end_time = time.time()
+#     val_acc = validate(model, val_loader)
+#     epoch_time = end_time - start_time
+#     train_size = len(train_dataset)
+#     val_size = len(val_dataset)
+    
+#     # Calling the function to print epoch statistics
+#     print_epoch_stats(epoch+1, train_loss, val_acc, epoch_time, train_size, val_size)
 
-for epoch in range(3):
-    train_loss = train(model, train_loader, optimizer)
-    print(f'Epoch: {epoch+1}, Loss: {train_loss}')
-    val_acc = validate(model, val_loader)
-    print(f'Epoch: {epoch+1}, Loss: {train_loss:.4f}, Validation Accuracy: {val_acc:.2f}%')
+
+
+
+
+
+
+
+
+
+
+# Collect epoch statistics in a list for later analysis
+epoch_statistics = []
+# Prepare for storing results
+train_loss_histories = []
+val_accuracy_histories = []
+
+# Define your hyperparameters to try
+configurations = [
+    {'batch_size': 10, 'lr': 0.01, 'optimizer': torch.optim.Adam, 'optimizer_name': 'Adam', 'weight_decay': 0},
+    {'batch_size': 20, 'lr': 0.01, 'optimizer': torch.optim.Adam, 'optimizer_name': 'Adam', 'weight_decay': 1e-5},
+    {'batch_size': 10, 'lr': 0.001, 'optimizer': torch.optim.SGD, 'optimizer_name': 'SGD', 'momentum': 0.9, 'weight_decay': 0},
+    {'batch_size': 20, 'lr': 0.001, 'optimizer': torch.optim.SGD, 'optimizer_name': 'SGD', 'momentum': 0.9, 'weight_decay': 1e-5},
+    {'batch_size': 10, 'lr': 0.001, 'optimizer': torch.optim.RMSprop, 'optimizer_name': 'RMSprop', 'weight_decay': 0},
+    {'batch_size': 20, 'lr': 0.001, 'optimizer': torch.optim.RMSprop, 'optimizer_name': 'RMSprop', 'weight_decay': 1e-5},
+    {'batch_size': 10, 'lr': 0.0001, 'optimizer': torch.optim.Adagrad, 'optimizer_name': 'Adagrad', 'weight_decay': 0},
+    {'batch_size': 20, 'lr': 0.0001, 'optimizer': torch.optim.Adagrad, 'optimizer_name': 'Adagrad', 'weight_decay': 1e-5},
+    {'batch_size': 10, 'lr': 0.01, 'optimizer': torch.optim.Adamax, 'optimizer_name': 'Adamax', 'weight_decay': 0},
+    {'batch_size': 20, 'lr': 0.01, 'optimizer': torch.optim.Adamax, 'optimizer_name': 'Adamax', 'weight_decay': 1e-5},
+]
+
+
+
+# Iterate over configurations
+for i, config in enumerate(configurations):
+    # Update DataLoaders for the new configuration
+    train_loader = torch_geometric.loader.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
+    val_loader = torch_geometric.loader.DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    # If you want to test different feature sizes, you would modify 'num_features' here
+    model = GCN(num_features=3, num_classes=len(categories)).to(device)  # Replace '3' with the actual feature size if it varies
+    
+    # Initialize the optimizer for this configuration
+    optimizer_class = config['optimizer']
+    if 'momentum' in config:
+        optimizer_weight_decay = config['momentum']
+    else:
+        optimizer_weight_decay = config['weight_decay']
+        
+    optimizer = optimizer_class(model.parameters(), lr=config['lr'], weight_decay=optimizer_weight_decay)
+
+    train_loss_history = []
+    val_accuracy_history = []
+
+    # Run Training and Validation for a number of epochs
+    for epoch in range(10):  # Replace '20' with the desired number of epochs
+        start_time = time.time()
+        train_loss = train(model, train_loader, optimizer)
+        train_loss_history.append(train_loss)
+        end_time = time.time()
+        val_acc = validate(model, val_loader)
+        val_accuracy_history.append(val_acc)
+        epoch_time = end_time - start_time
+        train_size = len(train_loader.dataset)
+        val_size = len(val_loader.dataset)
+        
+        # Print statistics for each epoch
+        print_epoch_stats(epoch+1, train_loss, val_acc, epoch_time, train_size, val_size)
+        collect_epoch_stats(epoch + 1, train_loss, val_acc, epoch_time, train_size, val_size, i+1)
+    
+    # Add the history for this configuration to the lists of results
+    train_loss_histories.append(train_loss_history)
+    val_accuracy_histories.append(val_accuracy_history)
+
+
+
+# Convert the list of statistics to a DataFrame
+stats_df = pd.DataFrame(epoch_statistics)
+
+# Save the DataFrame to a CSV file
+stats_df.to_csv('epoch_statistics.csv', index=False)
+
+# Print DataFrame to console (optional)
+print(stats_df)
+# Call function to plot results
+plot_results(configurations, train_loss_histories, val_accuracy_histories)
+
+
+
+
+
+
+
+
+
+
+
+
+
